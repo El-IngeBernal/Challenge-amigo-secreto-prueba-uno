@@ -1,45 +1,69 @@
-// El principal objetivo de este desafío es fortalecer tus habilidades en lógica de programación. Aquí deberás desarrollar la lógica para resolver el problema.
+// Esperar a que el DOM se cargue completamente antes de asignar eventos
 
 document.addEventListener("DOMContentLoaded", function() {
-    const participantsInput = document.getElementById("participants");
-    const assignButton = document.getElementById("assignButton");
-    const resultContainer = document.getElementById("result");
+    // Obtener los elementos de entrada y botones por su ID
+    const participantesInput = document.getElementById("participantes");
+    const agregarBtn = document.getElementById("agregar");
+    const asignarBtn = document.getElementById("asignar");
+    const listaParticipantes = document.getElementById("listaParticipantes");
+    const resultado = document.getElementById("resultado");
 
-    assignButton.addEventListener("click", function() {
-        const names = participantsInput.value.split(",").map(name => name.trim()).filter(name => name !== "");
-        
-        if (names.length < 2) {
-            alert("Por favor, ingrese al menos dos nombres para asignar un amigo secreto.");
-            return;
+    let participantes = []; // Lista para almacenar los participantes
+
+    // Función para agregar un participante a la lista
+    agregarBtn.addEventListener("click", function() {
+        const nombre = participantesInput.value.trim();
+        if (nombre && !participantes.includes(nombre)) {
+            participantes.push(nombre);
+            actualizarLista();
+            participantesInput.value = ""; // Limpiar el campo de entrada
         }
-        
-        const assignments = assignSecretFriends(names);
-        displayResults(assignments);
     });
 
-    function assignSecretFriends(names) {
-        let shuffled = [...names];
-        let isValidAssignment = false;
-
-        while (!isValidAssignment) {
-            shuffled = shuffled.sort(() => Math.random() - 0.5);
-            isValidAssignment = !shuffled.some((name, index) => name === names[index]);
-        }
-        
-        let assignments = {};
-        names.forEach((name, index) => {
-            assignments[name] = shuffled[index];
+    // Función para actualizar la lista de participantes en el HTML
+    function actualizarLista() {
+        listaParticipantes.innerHTML = ""; // Limpiar la lista
+        participantes.forEach((nombre, index) => {
+            const li = document.createElement("li");
+            li.textContent = nombre;
+            listaParticipantes.appendChild(li);
         });
-
-        return assignments;
     }
 
-    function displayResults(assignments) {
-        resultContainer.innerHTML = "";
-        for (let giver in assignments) {
+    // Función para asignar amigos secretos
+    asignarBtn.addEventListener("click", function() {
+        if (participantes.length < 2) {
+            resultado.textContent = "Se necesitan al menos 2 participantes.";
+            return;
+        }
+        let asignaciones = asignarAmigosSecretos(participantes);
+        mostrarAsignaciones(asignaciones);
+    });
+
+    // Función para mezclar y asignar amigos secretos
+    function asignarAmigosSecretos(lista) {
+        let copiaLista = [...lista]; // Copia de la lista original
+        let asignaciones = {};
+        
+        for (let participante of lista) {
+            let posibles = copiaLista.filter(p => p !== participante);
+            if (posibles.length === 0) {
+                return asignarAmigosSecretos(lista); // Reintentar si no hay combinaciones válidas
+            }
+            let elegido = posibles[Math.floor(Math.random() * posibles.length)];
+            asignaciones[participante] = elegido;
+            copiaLista = copiaLista.filter(p => p !== elegido);
+        }
+        return asignaciones;
+    }
+
+    // Función para mostrar los resultados de la asignación
+    function mostrarAsignaciones(asignaciones) {
+        resultado.innerHTML = "";
+        for (let [participante, amigo] of Object.entries(asignaciones)) {
             const p = document.createElement("p");
-            p.textContent = `${giver} → ${assignments[giver]}`;
-            resultContainer.appendChild(p);
+            p.textContent = `${participante} → ${amigo}`;
+            resultado.appendChild(p);
         }
     }
 });
